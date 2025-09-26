@@ -1,0 +1,85 @@
+{
+  "name": "pr-chat-coderabbit",
+  "displayName": "PR Chat (CodeRabbit)",
+  "description": "Chat-style collaborative PR reviews that connect to your CodeRabbit-powered FastAPI backend.",
+  "version": "0.0.1",
+  "publisher": "you",
+  "engines": {
+    "vscode": "^1.86.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:prChat.open",
+    "onView:prChatView"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "prChat.open",
+        "title": "PR Chat: Open"
+      }
+    ],
+    "configuration": {
+      "title": "PR Chat",
+      "properties": {
+        "prChat.serverBaseUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:8000",
+          "description": "Base URL of the FastAPI server"
+        },
+        "prChat.owner": {
+          "type": "string",
+          "default": "org",
+          "description": "Repository owner/org for PR room."
+        },
+        "prChat.repo": {
+          "type": "string",
+          "default": "service",
+          "description": "Repository name for PR room."
+        },
+        "prChat.prNumber": {
+          "type": "number",
+          "default": 1,
+          "description": "Pull request number."
+        },
+        "prChat.author": {
+          "type": "string",
+          "default": "vscode-user",
+          "description": "Display name when sending messages."
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "prChat",
+          "title": "PR Chat",
+          "icon": "media/comment.svg"
+        }
+      ]
+    },
+    "views": {
+      "prChat": [
+        {
+          "id": "prChatView",
+          "name": "Room",
+          "type": "webview"
+        }
+      ]
+    }
+  },
+  "main": "./out/extension.js",
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.2",
+    "@types/vscode": "^1.86.0",
+    "esbuild": "^0.21.5",
+    "typescript": "^5.4.0"
+  }
+}

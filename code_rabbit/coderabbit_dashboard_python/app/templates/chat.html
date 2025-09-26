@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PR Chat – {{ owner }}/{{ repo }}#{{ pr }}</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <style>
+    .chat { display:flex; flex-direction:column; gap:10px; padding:16px 20px; }
+    .bubble { background:#121214; border:1px solid #1f1f22; border-radius:12px; padding:10px 12px; }
+    .bubble.system { opacity:.8; }
+    .bubble.coderabbit { border-color:#2f2f7a; }
+    .row { display:flex; gap:8px; }
+    .row input, .row button { padding:8px; border-radius:10px; border:1px solid #1f1f22; background:#121214; color:#f5f5f6; }
+    .row button { background:#7c3aed; border:none; }
+    .pill { color:#a1a1aa; font-size:12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>PR Chat – {{ owner }}/{{ repo }}#{{ pr }}</h1>
+    <div class="pill">Live multi-dev chat with CodeRabbit suggestions</div>
+  </header>
+
+  <section class="chat" id="chat">
+    {% for m in messages %}
+      <div class="bubble {{ m.role }}"><strong>{{ m.author }}</strong>: {{ m.content }}</div>
+    {% endfor %}
+  </section>
+
+  <section class="chat">
+    <div class="row">
+      <input id="author" placeholder="Your name or @github" />
+      <input id="content" placeholder="Type a message or paste a CodeRabbit suggestion…" style="flex:1" />
+      <button id="send">Send</button>
+    </div>
+    <div class="row">
+      <input id="ghBody" placeholder="Comment to post to GitHub PR (requires GITHUB_TOKEN)" style="flex:1" />
+      <button id="postGh">Post</button>
+    </div>
+  </section>
+
+<script>
+  const owner = {{ owner|tojson }}, repo = {{ repo|tojson }}, pr = {{ pr|tojson }};
+  const ws = new WebSocket(`ws://${location.host}/ws/${owner}/${repo}/${pr}`);
+  const chat = document.getElementById('chat');
+
+  ws.onmessage = (ev) => {
+    const m = JSON.parse(ev.data);
+    const div = document.createElement('div');
+    div.className = 'bubble ' + (m.role || 'user');
+    div.innerHTML = `<strong>${m.author}</strong>: ${m.content}`;
+    chat.appendChild(div);
+    window.scrollTo(0, document.body.scrollHeight);
+  };
+
+  document.getElementById('send').onclick = () => {
+    const author = document.getElementById('author').value || 'anon';
+    const content = document.getElementById('content').value;
+    if(!content) return;
+    ws.send(JSON.stringify({author, role:'user', content}));
+    document.getElementById('content').value='';
+  };
+
+  document.getElementById('postGh').onclick = async () => {
+    const body = document.getElementById('ghBody').value;
+    if(!body) return alert('Type a comment first');
+    const res = await fetch(`/api/github/comment/${owner}/${repo}/${pr}`, {
+      method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({body})
+    });
+    if(!res.ok){ return alert('Failed: ' + await res.text()); }
+    const j = await res.json();
+    alert('Posted: ' + j.url);
+  };
+</script>
+</body>
+</html>
